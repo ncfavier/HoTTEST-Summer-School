@@ -40,7 +40,8 @@ the leftmost argument only.
 
 ```agda
 _&&'_ : Bool → Bool → Bool
-a &&' b = {!!}
+true &&' b = b
+false &&' b = false
 ```
 
 One advantage of this definition is that it reads just like a Boolean truth
@@ -54,7 +55,8 @@ verbose definition.
 
 ```agda
 _xor_ : Bool → Bool → Bool
-a xor b = {!!}
+true xor b = not b
+false xor b = b
 ```
 
 ### Exercise 3 (★)
@@ -67,16 +69,18 @@ left hand side and the right hand side compute to the same value.
 
 ```agda
 _^_ : ℕ → ℕ → ℕ
-n ^ m = {!!}
+n ^ zero = 1
+n ^ suc m = n * (n ^ m)
 
 ^-example : 3 ^ 4 ≡ 81
-^-example = {!!} -- refl 81 should fill the hole here
+^-example = refl _ -- refl 81 should fill the hole here
 
 _! : ℕ → ℕ
-n ! = {!!}
+zero ! = 1
+suc n ! = suc n * (n !)
 
 !-example : 4 ! ≡ 24
-!-example = {!!} -- refl 24 should fill the hole here
+!-example = refl _ -- refl 24 should fill the hole here
 ```
 
 ### Exercise 4 (★)
@@ -93,10 +97,12 @@ max (suc n) (suc m) = suc (max n m)
 
 ```agda
 min : ℕ → ℕ → ℕ
-min = {!!}
+min zero b = zero
+min (suc a) zero = zero
+min (suc a) (suc b) = suc (min a b)
 
 min-example : min 5 3 ≡ 3
-min-example = {!!} -- refl 3 should fill the hole here
+min-example = refl _ -- refl 3 should fill the hole here
 ```
 
 ### Exercise 5 (★)
@@ -110,10 +116,11 @@ element of the list `xs` and returns the resulting list.
 
 ```agda
 map : {X Y : Type} → (X → Y) → List X → List Y
-map f xs = {!!}
+map f [] = []
+map f (x :: xs) = f x :: map f xs
 
 map-example : map (_+ 3) (1 :: 2 :: 3 :: []) ≡ 4 :: 5 :: 6 :: []
-map-example = {!!} -- refl _ should fill the hole here
+map-example = refl _ -- refl _ should fill the hole here
 
                    -- We write the underscore, because we don't wish to repeat
                    -- the relatively long "4 :: 5 :: 6 :: []" and Agda can
@@ -130,14 +137,17 @@ should return [4 , 3 , 1], see the code below.
 
 ```agda
 filter : {X : Type} (p : X → Bool) → List X → List X
-filter = {!!}
+filter p [] = []
+filter p (x :: xs) with p x
+...                | true = x :: filter p xs
+...                | false = filter p xs
 
 is-non-zero : ℕ → Bool
 is-non-zero zero    = false
 is-non-zero (suc _) = true
 
 filter-example : filter is-non-zero (4 :: 3 :: 0 :: 1 :: 0 :: []) ≡ 4 :: 3 :: 1 :: []
-filter-example = {!!} -- refl _ should fill the hole here
+filter-example = refl _ -- refl _ should fill the hole here
 ```
 
 ## Part II: The identity type of the Booleans (★/★★)
@@ -152,7 +162,10 @@ are the same natural number, or else is empty, if `x` and `y` are different.
 
 ```agda
 _≣_ : Bool → Bool → Type
-a ≣ b = {!!}
+true ≣ true = 𝟙
+true ≣ false = 𝟘
+false ≣ true = 𝟘
+false ≣ false = 𝟙
 ```
 
 ### Exercise 2 (★)
@@ -161,7 +174,8 @@ a ≣ b = {!!}
 
 ```agda
 Bool-refl : (b : Bool) → b ≣ b
-Bool-refl = {!!}
+Bool-refl true = ⋆
+Bool-refl false = ⋆
 ```
 
 ### Exercise 3 (★★)

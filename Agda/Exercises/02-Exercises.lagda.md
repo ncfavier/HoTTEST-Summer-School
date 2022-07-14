@@ -35,10 +35,10 @@ open import sums
 Prove
 ```agda
 uncurry : {A B X : Type} → (A → B → X) → (A × B → X)
-uncurry = {!!}
+uncurry f (a , b) = f a b
 
 curry : {A B X : Type} → (A × B → X) → (A → B → X)
-curry = {!!}
+curry f a b = f (a , b)
 ```
 You might know these functions from programming e.g. in Haskell.
 But what do they say under the propositions-as-types interpretation?
@@ -49,38 +49,40 @@ But what do they say under the propositions-as-types interpretation?
 Consider the following goals:
 ```agda
 [i] : {A B C : Type} → (A × B) ∔ C → (A ∔ C) × (B ∔ C)
-[i] = {!!}
+[i] (inl (a , b)) = inl a , inl b
+[i] (inr c) = inr c , inr c
 
 [ii] : {A B C : Type} → (A ∔ B) × C → (A × C) ∔ (B × C)
-[ii] = {!!}
+[ii] (inl a , c) = inl (a , c)
+[ii] (inr b , c) = inr (b , c)
 
 [iii] : {A B : Type} → ¬ (A ∔ B) → ¬ A × ¬ B
-[iii] = {!!}
+[iii] k = (λ a → k (inl a)) , (λ b → k (inr b))
 
 [iv] : {A B : Type} → ¬ (A × B) → ¬ A ∔ ¬ B
-[iv] = {!!}
+[iv] = {!!} -- impossible
 
 [v] : {A B : Type} → (A → B) → ¬ B → ¬ A
-[v] = {!!}
+[v] f ¬b a = ¬b (f a)
 
 [vi] : {A B : Type} → (¬ A → ¬ B) → B → A
-[vi] = {!!}
+[vi] = {!!} -- impossible
 
 [vii] : {A B : Type} → ((A → B) → A) → A
-[vii] = {!!}
+[vii] = {!!} -- impossible
 
 [viii] : {A : Type} {B : A → Type}
     → ¬ (Σ a ꞉ A , B a) → (a : A) → ¬ B a
-[viii] = {!!}
+[viii] k a b = k (a , b)
 
 [ix] : {A : Type} {B : A → Type}
     → ¬ ((a : A) → B a) → (Σ a ꞉ A , ¬ B a)
-[ix] = {!!}
+[ix] = {!!} -- impossible
 
 [x] : {A B : Type} {C : A → B → Type}
       → ((a : A) → (Σ b ꞉ B , C a b))
       → Σ f ꞉ (A → B) , ((a : A) → C a (f a))
-[x] = {!!}
+[x] f = (λ a → pr₁ (f a)) , λ a → pr₂ (f a)
 ```
 For each goal determine whether it is provable or not.
 If it is, fill it. If not, explain why it shouldn't be possible.
@@ -100,7 +102,7 @@ In the lecture we have discussed that we can't  prove `∀ {A : Type} → ¬¬ A
 What you can prove however, is
 ```agda
 tne : ∀ {A : Type} → ¬¬¬ A → ¬ A
-tne = {!!}
+tne k a = k λ ¬a → ¬a a
 ```
 
 
@@ -108,10 +110,10 @@ tne = {!!}
 Prove
 ```agda
 ¬¬-functor : {A B : Type} → (A → B) → ¬¬ A → ¬¬ B
-¬¬-functor = {!!}
+¬¬-functor f ¬¬a ¬b = ¬¬a λ a → ¬b (f a)
 
 ¬¬-kleisli : {A B : Type} → (A → ¬¬ B) → ¬¬ A → ¬¬ B
-¬¬-kleisli = {!!}
+¬¬-kleisli f ¬¬a ¬b = ¬¬a λ a → f a ¬b
 ```
 Hint: For the second goal use `tne` from the previous exercise
 
@@ -131,7 +133,8 @@ to a true proposition while an uninhabited type corresponds to a false propositi
 With this in mind construct a family
 ```agda
 bool-as-type : Bool → Type
-bool-as-type = {!!}
+bool-as-type true = 𝟙
+bool-as-type false = 𝟘
 ```
 such that `bool-as-type true` corresponds to "true" and
 `bool-as-type false` corresponds to "false". (Hint:
@@ -143,7 +146,7 @@ we have seen canonical types corresponding true and false in the lectures)
 Prove
 ```agda
 bool-≡-char₁ : ∀ (b b' : Bool) → b ≡ b' → (bool-as-type b ⇔ bool-as-type b')
-bool-≡-char₁ = {!!}
+bool-≡-char₁ b b' (refl _) = id , id
 ```
 
 
@@ -162,9 +165,11 @@ You can actually prove this much easier! How?
 Finish our characterisation of `_≡_` by proving
 ```agda
 bool-≡-char₂ : ∀ (b b' : Bool) → (bool-as-type b ⇔ bool-as-type b') → b ≡ b'
-bool-≡-char₂ = {!!}
+bool-≡-char₂ true false (f , _) = 𝟘-elim (f ⋆)
+bool-≡-char₂ false true (_ , f) = 𝟘-elim (f ⋆)
+bool-≡-char₂ true true _ = refl _
+bool-≡-char₂ false false _ = refl _
 ```
-
 
 ## Part III (🌶)
 A type `A` is called *discrete* if it has decidable equality.
@@ -178,5 +183,19 @@ Prove that
 
 ```agda
 decidable-equality-char : (A : Type) → has-decidable-equality A ⇔ has-bool-dec-fct A
-decidable-equality-char = ?
+decidable-equality-char A = to , from where
+  to : has-decidable-equality A → has-bool-dec-fct A
+  to dec = f , g where
+    f : A → A → Bool
+    f a a' with dec a a'
+    ...    | inl _ = true
+    ...    | inr _ = false
+    g : ∀ a a' → a ≡ a' ⇔ f a a' ≡ true
+    g a a' with dec a a'
+    ...    | inl p = (λ _ → refl _) , λ _ → p
+    ...    | inr ¬p = (λ p → 𝟘-nondep-elim (¬p p)) , λ ()
+  from : has-bool-dec-fct A → has-decidable-equality A
+  from (f , spec) a a' with f a a' in eq
+  ...                  | true = inl (pr₂ (spec a a') eq)
+  ...                  | false = inr λ p → true≢false (sym (pr₁ (spec a a') p) ∙ eq)
 ```
