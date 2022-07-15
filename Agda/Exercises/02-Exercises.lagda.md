@@ -48,6 +48,12 @@ But what do they say under the propositions-as-types interpretation?
 
 Consider the following goals:
 ```agda
+LEM : Type₁
+LEM = {A : Type} → A ∔ ¬ A
+
+wLEM : Type₁
+wLEM = {A : Type} → ¬ ¬ A ∔ ¬ A
+
 [i] : {A B C : Type} → (A × B) ∔ C → (A ∔ C) × (B ∔ C)
 [i] (inl (a , b)) = inl a , inl b
 [i] (inr c) = inr c , inr c
@@ -75,9 +81,28 @@ Consider the following goals:
     → ¬ (Σ a ꞉ A , B a) → (a : A) → ¬ B a
 [viii] k a b = k (a , b)
 
-[ix] : {A : Type} {B : A → Type}
+IX : Type₁
+IX = {A : Type} {B : A → Type}
     → ¬ ((a : A) → B a) → (Σ a ꞉ A , ¬ B a)
+
+[ix] : IX
 [ix] = {!!} -- impossible
+
+LEM→IX : LEM → IX
+LEM→IX lem {A} {B} ¬∀ with lem {Σ λ a → ¬ B a}
+...                    | inl y = y
+...                    | inr n = 𝟘-nondep-elim (¬∀ λ a →
+                          ∔-nondep-elim id (λ z → 𝟘-nondep-elim (n (a , z))) (lem {B a}))
+
+IX→wLEM : IX → wLEM
+IX→wLEM ix {A} with ix {B = λ { false → ¬ A; true → A}} (λ f → f false (f true))
+...             | false , ¬¬a = inl ¬¬a
+...             | true , ¬a = inr ¬a
+
+IX→LEM : IX → LEM
+IX→LEM ix with IX→wLEM ix
+...        | inl ¬¬a = inl (pr₁ (ix ¬¬a))
+...        | inr ¬a = inr ¬a
 
 [x] : {A B : Type} {C : A → B → Type}
       → ((a : A) → (Σ b ꞉ B , C a b))
