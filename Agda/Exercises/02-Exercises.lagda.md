@@ -88,13 +88,17 @@ IX = {A : Type} {B : A → Type}
 [ix] : IX
 [ix] = {!!} -- impossible
 
+case_of_ : ∀ {a b} {A : Set a} {B : Set b} → A → (A → B) → B
+case x of f = f x
+
 LEM→IX : LEM → IX
 LEM→IX lem {A} {B} ¬∀ with lem {Σ λ a → ¬ B a}
 ...                    | inl y = y
 ...                    | inr n = 𝟘-nondep-elim (¬∀ λ a →
-                          (λ { (inl y') → y'
-                             ; (inr n') → 𝟘-nondep-elim (n (a , n')) })
-                          (lem {B a}))
+                          case lem {B a} of λ
+                            { (inl y') → y'
+                            ; (inr n') → 𝟘-nondep-elim (n (a , n'))
+                            })
 
 IX→wLEM : IX → wLEM
 IX→wLEM ix {A} with dec
