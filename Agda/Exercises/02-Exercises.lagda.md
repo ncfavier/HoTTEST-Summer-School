@@ -92,12 +92,16 @@ LEM→IX : LEM → IX
 LEM→IX lem {A} {B} ¬∀ with lem {Σ λ a → ¬ B a}
 ...                    | inl y = y
 ...                    | inr n = 𝟘-nondep-elim (¬∀ λ a →
-                          ∔-nondep-elim id (λ z → 𝟘-nondep-elim (n (a , z))) (lem {B a}))
+                          (λ { (inl y') → y'
+                             ; (inr n') → 𝟘-nondep-elim (n (a , n')) })
+                          (lem {B a}))
 
 IX→wLEM : IX → wLEM
-IX→wLEM ix {A} with ix {B = λ { false → ¬ A; true → A}} (λ f → f false (f true))
-...             | false , ¬¬a = inl ¬¬a
-...             | true , ¬a = inr ¬a
+IX→wLEM ix {A} with dec
+  where
+    dec = ix {B = λ { false → ¬ A; true → A }} (λ f → f false (f true))
+... | false , ¬¬a = inl ¬¬a
+... | true , ¬a = inr ¬a
 
 IX→LEM : IX → LEM
 IX→LEM ix with IX→wLEM ix
@@ -210,13 +214,13 @@ Prove that
 decidable-equality-char : (A : Type) → has-decidable-equality A ⇔ has-bool-dec-fct A
 decidable-equality-char A = to , from where
   to : has-decidable-equality A → has-bool-dec-fct A
-  to dec = f , g where
+  to dec = f , spec where
     f : A → A → Bool
     f a a' with dec a a'
     ...    | inl _ = true
     ...    | inr _ = false
-    g : ∀ a a' → a ≡ a' ⇔ f a a' ≡ true
-    g a a' with dec a a'
+    spec : ∀ a a' → a ≡ a' ⇔ f a a' ≡ true
+    spec a a' with dec a a'
     ...    | inl p = (λ _ → refl _) , λ _ → p
     ...    | inr ¬p = (λ p → 𝟘-nondep-elim (¬p p)) , λ ()
   from : has-bool-dec-fct A → has-decidable-equality A
