@@ -90,7 +90,7 @@ to-from-base = refl _
 
 (⋆⋆⋆)
 
-```
+```agda
 to-from-loop : ap from (ap to loop) ≡ loop
 to-from-loop = ap from (ap to loop)            ≡⟨ ap (ap from) (S1-rec-loop _ _) ⟩
                ap from (east ∙ ! west)         ≡⟨ ap-∙ east _ ⟩
@@ -123,7 +123,7 @@ compose-pair≡ (refl _) (refl _) (refl _) (refl _) = refl _
 ```
 
 (🌶️)
-```
+```agda
 torus-to-circles : Torus → S1 × S1
 torus-to-circles = T-rec (base , base) (pair≡ loop (refl _)) (pair≡ (refl _) loop) square
   where
