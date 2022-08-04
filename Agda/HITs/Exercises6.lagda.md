@@ -22,7 +22,7 @@ In general, the dependent elimination rule for a higher inductive type
 implies the simple/non-dependent elimination rule.  In this problem, you
 will show this for the bowtie.  We could have done this for the circles
 in the past lectures, but I wanted to introduce the non-dependent
-elimination rule first, and then left both as postulates.  
+elimination rule first, and then left both as postulates.
 
 Note that this problem has a bit of a "metamathematical" flavor (showing
 that a set of axioms is implied by a shorter set).  If you prefer to
@@ -31,7 +31,7 @@ space of the bowtie below, I recommend turning Bowtie-rec and its
 associated reductions into postulates like we have done for previous
 higher inductive types, and adding a rewrite for the reduction on the
 base point.  This will make Agda display things in a more easy to read
-way (otherwise, it will display Bowtie-rec as a meta-variable). 
+way (otherwise, it will display Bowtie-rec as a meta-variable).
 
 Here is the definition of the bowtie and its dependent elimination rule:
 
@@ -67,10 +67,10 @@ postulate
 ```
 
 Next, we will prove the non-dependent elim/"recursion principle" from
-these.  First, we need some lemmas.  
+these.  First, we need some lemmas.
 
 (⋆) Paths over a path in a constant fibration are equivalent to paths.
-It is simple to prove this by path induction.  
+It is simple to prove this by path induction.
 
 ```agda
 PathOver-constant : {l1 l2 : Level} {A : Type l1} {B : Type l2}
@@ -79,7 +79,7 @@ PathOver-constant : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                   → {b1 b2 : B}
                   → b1 ≡ b2
                   → b1 ≡ b2 [ (\ _ → B) ↓ p ]
-PathOver-constant = {!!}
+PathOver-constant (refl _) (refl _) = reflo
 
 PathOver-constant-inverse : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                           → {a1 a2 : A}
@@ -87,7 +87,7 @@ PathOver-constant-inverse : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                           → {b1 b2 : B}
                           → b1 ≡ b2 [ (\ _ → B) ↓ p ]
                           → b1 ≡ b2
-PathOver-constant-inverse = {!!}
+PathOver-constant-inverse .(refl _) reflo = refl _
 
 PathOver-constant-inverse-cancel1 : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                           → {a1 a2 : A}
@@ -95,7 +95,7 @@ PathOver-constant-inverse-cancel1 : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                           → {b1 b2 : B}
                           → (q : b1 ≡ b2)
                           → PathOver-constant-inverse p (PathOver-constant p q) ≡ q
-PathOver-constant-inverse-cancel1 = {!!}
+PathOver-constant-inverse-cancel1 (refl _) (refl _) = refl _
 
 PathOver-constant-inverse-cancel2 : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                           → {a1 a2 : A}
@@ -103,7 +103,7 @@ PathOver-constant-inverse-cancel2 : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                           → {b1 b2 : B}
                           → (q : b1 ≡ b2 [ _ ↓ p ])
                           → PathOver-constant p (PathOver-constant-inverse p q) ≡ q
-PathOver-constant-inverse-cancel2 = {!!}
+PathOver-constant-inverse-cancel2 .(refl _) reflo = refl _
 
 PathOver-constant-equiv : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                           → {a1 a2 : A}
@@ -126,7 +126,7 @@ ap-apd-constant : {l1 l2 : Level} {A : Type l1} {B : Type l2}
                 → (p : a1 ≡ a2)
                 → (f : A → B)
                 → ap f p ≡ PathOver-constant-inverse _ (apd f p)
-ap-apd-constant = {!!}
+ap-apd-constant (refl _) f = refl _
 ```
 
 (⋆) Define Bowtie-rec and prove the reduction for base:
@@ -136,15 +136,15 @@ Bowtie-rec : {l : Level} {X : Type l}
              (x : X)
              (p : x ≡ x [ X ])
              (q : x ≡ x [ X ])
-           → (Bowtie) → X
-Bowtie-rec {_} {X} x p q = {!!}
+           → Bowtie → X
+Bowtie-rec {_} {X} x p q = Bowtie-elim _ x (PathOver-constant loop1 p) (PathOver-constant loop2 q)
 
 Bowtie-rec-base : {l : Level} {X : Type l}
              (x : X)
              (p : x ≡ x [ X ])
              (q : x ≡ x [ X ])
            → Bowtie-rec x p q baseB ≡ x
-Bowtie-rec-base _ _ _ = {!!}
+Bowtie-rec-base _ _ _ = refl _
 ```
 
 (⋆⋆) Prove the reductions for loop:
@@ -155,17 +155,21 @@ Bowtie-rec-loop1 : {l : Level} {X : Type l}
                (p : x ≡ x [ X ])
                (q : x ≡ x [ X ])
              → ap (Bowtie-rec x p q) loop1 ≡ p [ x ≡ x ]
-Bowtie-rec-loop1 x p q =  {!!}
+Bowtie-rec-loop1 x p q = ap-apd-constant _ _
+                       ∙ ap (PathOver-constant-inverse _) (Bowtie-elim-loop1 _ _ _ _)
+                       ∙ PathOver-constant-inverse-cancel1 _ _
 
 Bowtie-rec-loop2 : {l : Level} {X : Type l}
                    (x : X)
                    (p : x ≡ x [ X ])
                    (q : x ≡ x [ X ])
                  → ap (Bowtie-rec x p q) loop2 ≡ q [ x ≡ x ]
-Bowtie-rec-loop2 x p q = {!!}
+Bowtie-rec-loop2 x p q = ap-apd-constant _ _
+                       ∙ ap (PathOver-constant-inverse _) (Bowtie-elim-loop2 _ _ _ _)
+                       ∙ PathOver-constant-inverse-cancel1 _ _
 ```
 
-# Loop space of the bowtie 
+# Loop space of the bowtie
 
 In this problem, you will show that the loop space of the bowtie is the
 "free group on two generators", which we will write in Agda as F2.  The
@@ -173,7 +177,7 @@ point of this problem is mainly for you to read and really understand
 the proof that the loop space of the circle is ℤ.  All of the code is
 essentially a rearrangement of code from that proof.  I'd suggest
 trying the proof yourself, and looking at the analogous bits of the
-Circle proof if you get stuck.  
+Circle proof if you get stuck.
 
 ## Some lemmas (⋆⋆)
 
@@ -181,18 +185,20 @@ In the Circle proof in lecture, I inlined a couple of things that
 can be proved more generally.  You might want to prove these general
 versions in advance and use them in your proof, or, if that seems
 confusing, you might first do the proof without these lemmas
-to motivate them.  
+to motivate them.
 
 ```agda
 concat-equiv : ∀ {A : Type} (a : A) {a' a'' : A}
                      → (p : a' ≡ a'')
                      → (a ≡ a') ≃ (a ≡ a'')
-concat-equiv = {!!}
+concat-equiv a p = improve (Isomorphism (_∙ p) (Inverse (_∙ ! p)
+  (λ x → ! (∙assoc x p (! p)) ∙ ap (x ∙_) (!-inv-r p))
+  (λ x → ! (∙assoc x (! p) p) ∙ ap (x ∙_) (!-inv-l p))))
 
 concat-equiv-map : ∀ {A : Type} {a a' a'' : A}
                  → (p : a' ≡ a'')
-                 → fwd (concat-equiv a p) ≡ \ q → q ∙ p 
-concat-equiv-map = {!!}
+                 → fwd (concat-equiv a p) ≡ λ q → q ∙ p
+concat-equiv-map _ = refl _
 ```
 
 (Note: you could also write out all of the components, but this was easier.)
@@ -201,16 +207,16 @@ concat-equiv-map = {!!}
 transport-∙ : {l1 l2 : Level} {A : Type l1} {B : A → Type l2}
                   {a1 a2 a3 : A} (p : a1 ≡ a2) (q : a2 ≡ a3)
                 → transport B (p ∙ q) ∼ transport B q ∘ transport B p
-transport-∙ = {!!}
+transport-∙ (refl _) (refl _) x = refl _
 ```
-## Calculating the loop space 
+## Calculating the loop space
 
 First, we will assume a type F2 representing the free group on 2
 generators.
 
 ℤ is the free group on one generator, with 0 as the neutral element and
 succℤ corresponding to "addition" with the one generator.  succℤ is an
-equivalence, with the inverse representing "addition" with -1.  
+equivalence, with the inverse representing "addition" with -1.
 
 For other groups, it is somewhat more common to think of the group
 operation as "multiplication" rather than "addition", so we will name
@@ -232,7 +238,7 @@ this type: that it maps uniquely into any other type with a point and
 two equivalences, and that it is a set.
 
 ```agda
-module AssumeF2 
+module AssumeF2
     (F2 : Type)
     (1F : F2)
     (mult1 : F2 ≃ F2)
@@ -274,19 +280,38 @@ proof will be analogous to the corresponding part of the Circle proof.
 
 ```agda
     Cover : Bowtie → Type
-    Cover = {!!}
-                  
+    Cover = Bowtie-rec F2 (ua mult1) (ua mult2)
+
     encode : (x : Bowtie) → baseB ≡ x → Cover x
-    encode = {!!}
+    encode x p = transport Cover p 1F
+
+    transport-Cover-loop1 : (f : F2) → transport Cover loop1 f ≡ fwd mult1 f
+    transport-Cover-loop1 f = transport-ap-assoc Cover loop1 ∙ ap (λ x → transport id x f) (Bowtie-rec-loop1 _ _ _) ∙ uaβ _
+
+    transport-Cover-loop2 : (f : F2) → transport Cover loop2 f ≡ fwd mult2 f
+    transport-Cover-loop2 f = transport-ap-assoc Cover loop2 ∙ ap (λ x → transport id x f) (Bowtie-rec-loop2 _ _ _) ∙ uaβ _
 
     decode : (x : Bowtie) → Cover x → baseB ≡ x
-    decode = {!!}
+    decode = Bowtie-elim _ b
+      (PathOver-→ λ a → PathOver-path-to (! (F2-rec-mult1 _ _ _ _) ∙ ! (ap b (transport-Cover-loop1 _))))
+      (PathOver-→ λ a → PathOver-path-to (! (F2-rec-mult2 _ _ _ _) ∙ ! (ap b (transport-Cover-loop2 _))))
+      where
+        b : F2 → baseB ≡ baseB
+        b = F2-rec (refl _) (concat-equiv _ loop1) (concat-equiv _ loop2)
 
     encode-decode : (x : Bowtie) (p : baseB ≡ x) → decode x (encode x p) ≡ p
-    encode-decode = {!!}
+    encode-decode .baseB (refl .baseB) = F2-rec-1 _ _ _
+
+    endo-F2-is-id : (f : F2 → F2) → f 1F ≡ 1F → f ∘ fwd mult1 ∼ fwd mult1 ∘ f → f ∘ fwd mult2 ∼ fwd mult2 ∘ f → (x : F2) → f x ≡ x
+    endo-F2-is-id f p m1 m2 x = F2-rec-unique f 1F mult1 mult2 p m1 m2 x
+                              ∙ ! (F2-rec-unique id 1F mult1 mult2 (refl _) (λ _ → refl _) (λ _ → refl _) x)
 
     decode-encode : (x : Bowtie) (p : Cover x) → encode x (decode x p) ≡ p
-    decode-encode = {!!}
-    
-```
+    decode-encode = Bowtie-elim _ b (PathOver-Π {!   !}) {!   !}
+      where
+        b : (p : Cover baseB) → encode baseB (decode baseB p) ≡ p
+        b = endo-F2-is-id (encode baseB ∘ decode baseB) (ap (encode baseB) (F2-rec-1 _ _ _))
+          (λ x → ap (encode baseB) (F2-rec-mult1 _ _ _ _) ∙ transport-∙ _ loop1 _ ∙ transport-Cover-loop1 _)
+          (λ x → ap (encode baseB) (F2-rec-mult2 _ _ _ _) ∙ transport-∙ _ loop2 _ ∙ transport-Cover-loop2 _)
 
+```
