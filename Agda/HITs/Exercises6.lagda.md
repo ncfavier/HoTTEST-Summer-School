@@ -307,11 +307,13 @@ proof will be analogous to the corresponding part of the Circle proof.
                               ∙ ! (F2-rec-unique id 1F mult1 mult2 (refl _) (λ _ → refl _) (λ _ → refl _) x)
 
     decode-encode : (x : Bowtie) (p : Cover x) → encode x (decode x p) ≡ p
-    decode-encode = Bowtie-elim _ b (PathOver-Π {!   !}) {!   !}
+    decode-encode = Bowtie-elim _ b
+      (PathOver-Π λ _ → fwd (transport-to-pathover _ _ _ _) (hSetF _ _ _ _))
+      (PathOver-Π λ _ → fwd (transport-to-pathover _ _ _ _) (hSetF _ _ _ _))
       where
         b : (p : Cover baseB) → encode baseB (decode baseB p) ≡ p
         b = endo-F2-is-id (encode baseB ∘ decode baseB) (ap (encode baseB) (F2-rec-1 _ _ _))
-          (λ x → ap (encode baseB) (F2-rec-mult1 _ _ _ _) ∙ transport-∙ _ loop1 _ ∙ transport-Cover-loop1 _)
-          (λ x → ap (encode baseB) (F2-rec-mult2 _ _ _ _) ∙ transport-∙ _ loop2 _ ∙ transport-Cover-loop2 _)
+          (λ _ → ap (encode baseB) (F2-rec-mult1 _ _ _ _) ∙ transport-∙ _ loop1 _ ∙ transport-Cover-loop1 _)
+          (λ _ → ap (encode baseB) (F2-rec-mult2 _ _ _ _) ∙ transport-∙ _ loop2 _ ∙ transport-Cover-loop2 _)
 
 ```
