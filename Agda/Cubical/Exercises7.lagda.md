@@ -42,11 +42,20 @@ private
 
 State and prove funExt for dependent functions `f g : (x : A) → B x`
 
+```agda
+funExtP : {f g : (x : A) → B x} → ((x : A) → f x ≡ g x) → f ≡ g
+funExtP p i x = p x i
+```
+
 ### Exercise 2 (★)
 
 Generalize the type of ap to dependent function `f : (x : A) → B x`
 (hint: the result should be a `PathP`)
 
+```agda
+apd : {x y : A} → (f : (x : A) → B x) → (p : x ≡ y) → PathP (λ i → B (p i)) (f x) (f y)
+apd f p i = f (p i)
+```
 
 ## Part II: Some facts about (homotopy) propositions and sets
 
@@ -58,6 +67,36 @@ are defined in `cubical-prelude` in the usual way
 
 State and prove that inhabited propositions are contractible
 
+```agda
+inhabited-prop : isProp A → A → isContr A
+inhabited-prop h a = a , h a
+```
+
+### Exercise 4 (deleted) (★★)
+
+We could have stated isProp as follows:
+
+```agda
+isProp' : Type ℓ → Type ℓ
+isProp' A = (x y : A) → isContr (x ≡ y)
+```
+
+Prove that isProp' A implies isProp A and vice versa.
+Hint: for one direction you need path composition `_·_`, which one?
+
+```agda
+isProp'→isProp : isProp' A → isProp A
+isProp'→isProp h x y = h x y .pr₁
+
+isProp→isProp' : isProp A → isProp' A
+isProp→isProp' {A = A} h x y .pr₁ = h x y
+isProp→isProp' {A = A} h x y .pr₂ q i j =
+  hcomp (λ where k (i = i0) → h (h x y j) (h x y j) k
+                 k (i = i1) → q j
+                 k (j = i0) → h x x (i ∨ k)
+                 k (j = i1) → h y y (i ∨ k))
+        (h (h x y j) (q j) i)
+```
 
 ### Exercise 4 (★)
 
@@ -65,7 +104,7 @@ Prove
 
 ```agda
 isPropΠ : (h : (x : A) → isProp (B x)) → isProp ((x : A) → B x)
-isPropΠ = {!!}
+isPropΠ h f g i x = h x (f x) (g x) i
 ```
 
 ### Exercise 5 (★)
@@ -74,7 +113,7 @@ Prove the inverse of `funExt` (sometimes called `happly`):
 
 ```agda
 funExt⁻ : {f g : (x : A) → B x} → f ≡ g → ((x : A) → f x ≡ g x)
-funExt⁻  = {!!}
+funExt⁻ p x i = p i x
 ```
 
 ### Exercise 6 (★★)
@@ -83,7 +122,7 @@ Use funExt⁻ to prove isSetΠ:
 
 ```agda
 isSetΠ : (h : (x : A) → isSet (B x)) → isSet ((x : A) → B x)
-isSetΠ = {!!}
+isSetΠ h a b p q i j x = h x (a x) (b x) (funExt⁻ p x) (funExt⁻ q x) i j
 ```
 
 ### Exercise 7 (★★★): alternative contractibility of singletons
@@ -100,7 +139,7 @@ Prove the corresponding version of contractibility of singetons for
 
 ```agda
 isContrSingl' : (x : A) → isContr (singl' x)
-isContrSingl' x = {!!}
+isContrSingl' x = (x , refl) , (λ (y , p) i → p (~ i) , λ j → p (~ i ∨ j))
 ```
 
 ## Part III: Equality in Σ-types
@@ -118,17 +157,19 @@ module _ {A : Type ℓ} {B : A → Type ℓ'} {x y : Σ A B} where
 
   ΣPathP : Σ p ꞉ pr₁ x ≡ pr₁ y , PathP (λ i → B (p i)) (pr₂ x) (pr₂ y)
          → x ≡ y
-  ΣPathP = {!!}
+  ΣPathP p i .pr₁ = p .pr₁ i
+  ΣPathP p i .pr₂ = p .pr₂ i
 
   PathPΣ : x ≡ y
          → Σ p ꞉ pr₁ x ≡ pr₁ y , PathP (λ i → B (p i)) (pr₂ x) (pr₂ y)
-  PathPΣ = {!!}
+  PathPΣ p .pr₁ i = p i .pr₁
+  PathPΣ p .pr₂ i = p i .pr₂
 
   ΣPathP-PathPΣ : ∀ p → PathPΣ (ΣPathP p) ≡ p
-  ΣPathP-PathPΣ = {!!}
+  ΣPathP-PathPΣ p = refl
 
   PathPΣ-ΣPathP : ∀ p → ΣPathP (PathPΣ p) ≡ p
-  PathPΣ-ΣPathP = {!!}
+  PathPΣ-ΣPathP p = refl
 ```
 
 If one looks carefully the proof of prf in Lecture 7 uses ΣPathP
@@ -151,13 +192,43 @@ and `Torus'` with a path constructor `square` that involves composition.
 
 Using these two ideas, define the *Klein bottle* in two different ways.
 
+```agda
+data Klein : Type where
+  point : Klein
+  line1 : point ≡ point
+  line2 : point ≡ point
+  square : PathP (λ i → line1 i ≡ line1 (~ i)) line2 line2
+
+data Klein' : Type where
+  point : Klein'
+  line1 : point ≡ point
+  line2 : point ≡ point
+  square : line1 ∙ line2 ≡ line2 ∙ sym line1
+```
+
 ### Exercise 10 (★★)
 
 Prove
 
 ```agda
 suspUnitChar : Susp Unit ≡ Interval
-suspUnitChar = {!!}
+suspUnitChar = isoToPath (iso to from to-from from-to) where
+  to : Susp Unit → Interval
+  to north = zero
+  to south = one
+  to (merid ⋆ i) = seg i
+  from : Interval → Susp Unit
+  from zero = north
+  from one = south
+  from (seg i) = merid ⋆ i
+  to-from : ∀ x → to (from x) ≡ x
+  to-from zero = refl
+  to-from one = refl
+  to-from (seg i) = refl
+  from-to : ∀ x → from (to x) ≡ x
+  from-to north = refl
+  from-to south = refl
+  from-to (merid ⋆ i) = refl
 ```
 
 
@@ -165,6 +236,29 @@ suspUnitChar = {!!}
 
 Define suspension using the Pushout HIT and prove that it's equal to Susp.
 
+```agda
+Susp' : ∀ {ℓ} → Type ℓ → Type ℓ
+Susp' A = Pushout {A = A} (λ _ → ⋆) (λ _ → ⋆)
+
+Susp≡Susp' : ∀ {ℓ} {A : Type ℓ} → Susp A ≡ Susp' A
+Susp≡Susp' {A = A} = isoToPath (iso to from to-from from-to) where
+  to : Susp A → Susp' A
+  to north = inl ⋆
+  to south = inr ⋆
+  to (merid a i) = push a i
+  from : Susp' A → Susp A
+  from (inl x) = north
+  from (inr x) = south
+  from (push a i) = merid a i
+  to-from : ∀ x → to (from x) ≡ x
+  to-from (inl ⋆) = refl
+  to-from (inr ⋆) = refl
+  to-from (push a i) = refl
+  from-to : ∀ x → from (to x) ≡ x
+  from-to north = refl
+  from-to south = refl
+  from-to (merid a i) = refl
+```
 
 ### Exercise 12 (🌶)
 
@@ -172,7 +266,6 @@ The goal of this exercise is to prove
 
 ```agda
 suspBoolChar : Susp Bool ≡ S¹
-suspBoolChar = {!!}
 ```
 
 For the map `Susp Bool → S¹`, we have to specify the behavior of two
@@ -221,4 +314,29 @@ result, that is a direct consequence of `comp-filler` in `Cubical Agda`
 ```agda
 rUnit : {x y : A} (p : x ≡ y) → p ∙ refl ≡ p
 rUnit p = sym (comp-filler p refl)
+```
+
+```agda
+suspBoolChar = isoToPath (iso to from to-from from-to) where
+  to : Susp Bool → S¹
+  to north = base
+  to south = base
+  to (merid true i) = base
+  to (merid false i) = loop i
+  from : S¹ → Susp Bool
+  from base = north
+  from (loop i) = (merid false ∙ sym (merid true)) i
+  to-from : ∀ x → to (from x) ≡ x
+  to-from base = refl
+  to-from (loop i) j = rUnit loop j i
+  from-to : ∀ x → from (to x) ≡ x
+  from-to north = refl
+  from-to south = merid true
+  from-to (merid true i) j = merid true (i ∧ j)
+  from-to (merid false i) j = comp-filler (merid false) (sym (merid true)) (~ j) i
+    -- or directly:
+    -- hcomp (λ where k (i = i0) → north
+    --                k (i = i1) → merid true (j ∨ ~ k)
+    --                k (j = i1) → merid false i)
+    --       (merid false i)
 ```
