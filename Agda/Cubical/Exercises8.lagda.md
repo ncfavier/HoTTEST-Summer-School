@@ -105,12 +105,13 @@ isProp→PathP p a₀ a₁ = toPathP (p _ _ _)
 
 ### Exercise 5 (★★)
 
-Prove the following lemma charictarising equality in subtypes:
+Prove the following lemma characterising equality in subtypes:
 
 ```agda
 Σ≡Prop : {A : Type ℓ} {B : A → Type ℓ'} {u v : Σ A B} (h : (x : A) → isProp (B x))
        → (p : pr₁ u ≡ pr₁ v) → u ≡ v
-Σ≡Prop {B = B} {u = u} {v = v} h p = {!!}
+Σ≡Prop {u = u} {v = v} h p i .pr₁ = p i
+Σ≡Prop {u = u} {v = v} h p i .pr₂ = isProp→PathP (λ i → h (p i)) (pr₂ u) (pr₂ v) i
 ```
 
 ### Exercise 6 (★★★)
@@ -122,5 +123,11 @@ This requires drawing a cube (yes, an actual 3D one)!
 
 ```agda
 isPropIsContr : {A : Type ℓ} → isProp (isContr A)
-isPropIsContr (c0 , h0) (c1 , h1) j = {!!} 
+isPropIsContr (c0 , h0) (c1 , h1) i .pr₁ = h0 c1 i
+isPropIsContr (c0 , h0) (c1 , h1) i .pr₂ y j =
+  hcomp (λ where k (i = i0) → h0 y (j ∧ k)
+                 k (i = i1) → h1 y j
+                 k (j = i0) → h0 c1 i
+                 k (j = i1) → h0 y (i ∨ k))
+        (h0 (h1 y j) i)
 ```
