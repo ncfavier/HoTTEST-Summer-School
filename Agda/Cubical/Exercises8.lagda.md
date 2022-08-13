@@ -40,7 +40,7 @@ Prove the propositional computation law for `J`:
 ```agda
 JRefl : {A : Type ℓ} {x : A} (P : (z : A) → x ≡ z → Type ℓ'')
   (d : P x refl) → J P d refl ≡ d
-JRefl P d = {!!}
+JRefl {x = x} P d i = transp (λ _ → P x refl) i d
 ```
 
 ### Exercise 2 (★★)
@@ -58,15 +58,15 @@ transport computes away at `i = i1`.
 ```agda
 fromPathP : {A : I → Type ℓ} {x : A i0} {y : A i1} →
   PathP A x y → transport (λ i → A i) x ≡ y
-fromPathP {A = A} p i = {!!}
+fromPathP {A = A} p i = transp (λ j → A (i ∨ j)) i (p i)
 ```
 
 ### Exercise 3 (★★★)
 
-Using `hcomp`, cunstruct a method for turning paths into dependent paths.
+Using `hcomp`, construct a method for turning paths into dependent paths.
 
 **Hint**:
-At each point `i`, the verical fibre of the following diagram should lie in
+At each point `i`, the vertical fibre of the following diagram should lie in
 `A i`. The key is to parametrise the bottom line with a dependent path from `x`
 to `transport A x`. This requires writing a `transp` that computes away at
 `i = i0`.
@@ -87,9 +87,9 @@ toPathP : {A : I → Type ℓ} {x : A i0} {y : A i1} →
   transport (λ i → A i) x ≡ y → PathP A x y
 toPathP {A = A} {x = x} p i =
   hcomp
-    (λ {j (i = i0) → {!!} ;
-        j (i = i1) → {!!} })
-   {!!}
+    (λ {j (i = i0) → x ;
+        j (i = i1) → p j })
+   (transp (λ j → A (i ∧ j)) (~ i) x)
 ```
 
 ### Exercise 4 (★)
@@ -100,7 +100,7 @@ lines in hProps, provided their boundary.
 ```agda
 isProp→PathP : {A : I → Type ℓ} (p : (i : I) → isProp (A i))
   (a₀ : A i0) (a₁ : A i1) → PathP A a₀ a₁
-isProp→PathP p a₀ a₁ = {!!}
+isProp→PathP p a₀ a₁ = toPathP (p _ _ _)
 ```
 
 ### Exercise 5 (★★)
