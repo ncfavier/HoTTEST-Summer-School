@@ -4,3 +4,5 @@ include: Lecture-Notes/files
          Exercises
          Auxiliary
          Cubical
+flags:
+  --postfix-projections
