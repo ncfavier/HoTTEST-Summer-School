@@ -27,7 +27,7 @@ module Exercises9 where
 
 open import cubical-prelude
 open import Lecture7-notes
-open import Lecture8-notes
+-- open import Lecture8-notes
 open import Lecture9-notes
 open import Solutions7 hiding (rUnit)
 open import Solutions8
@@ -43,7 +43,11 @@ Hint: one hcomp should suffice. Use `comp-filler` and connections
 
 ```agda
 lUnit : {A : Type ℓ} {x y : A} (p : x ≡ y) → refl ∙ p ≡ p
-lUnit = {!!}
+lUnit {x = x} p i j =
+  hcomp (λ where k (i = i1) → p (j ∧ k)
+                 k (j = i0) → x
+                 k (j = i1) → p k)
+        x
 
 ```
 ### (b)
@@ -53,14 +57,16 @@ Hint: use (almost) the exact same hcomp.
 
 ```agda
 rUnit : {A : Type ℓ} {x y : A} (p : x ≡ y) → p ∙ refl ≡ p
-rUnit = {!!}
+rUnit {x = x} {y = y} p i j =
+  hcomp (λ where k (i = i1) → p j
+                 k (j = i0) → x
+                 k (j = i1) → y)
+        (p j)
 
 -- uncomment to see if it type-checks
 
-{-
 rUnit≡lUnit : ∀ {ℓ} {A : Type ℓ} {x : A} → rUnit (refl {x = x}) ≡ lUnit refl
 rUnit≡lUnit = refl
--}
 
 ```
 
@@ -71,9 +77,20 @@ Hint: one hcomp should suffice. This one can be done without connections
   (but you might need comp-filler in more than one place)
 
 ```agda
+comp-filler' : {A : Type ℓ} {x y z : A} (p : x ≡ y) (q : y ≡ z)
+             → PathP (λ j → p (~ j) ≡ z) q (p ∙ q)
+comp-filler' {x = x} p q i j = 
+  hcomp (λ where k (i = i0) → q (j ∧ k)
+                 k (j = i0) → p (~ i)
+                 k (j = i1) → q k)
+        (p (~ i ∨ j))
+
 assoc : {A : Type ℓ} {x y z w : A} (p : x ≡ y) (q : y ≡ z) (r : z ≡ w)
   → p ∙ (q ∙ r) ≡ (p ∙ q) ∙ r
-assoc = {!!}
+assoc {x = x} p q r i j =
+  hcomp (λ where k (j = i0) → x
+                 k (j = i1) → comp-filler' q r (~ i) k)
+        (comp-filler p q i j)
 
 ```
 
@@ -92,8 +109,8 @@ Hint: each hole will need a `∨` or a `∧`
 pre-EH : {A : Type ℓ} {x : A} (p q : refl {x = x} ≡ refl)
   → ap (λ x → x ∙ refl) p ∙ ap (λ x → refl ∙ x) q
    ≡ ap (λ x → refl ∙ x) q ∙ ap (λ x → x ∙ refl) p
-pre-EH {x = x} p q i = (λ j → p {!!} ∙ q {!!})
-                     ∙ (λ j → p {!!} ∙ q {!!})
+pre-EH {x = x} p q i = (λ j → p (j ∧ ~ i) ∙ q (j ∧ i))
+                     ∙ (λ j → p (~ i ∨ j) ∙ q (i ∨ j))
 
 ```
 (b) If we manage to cancel out all of the annoying aps, we get Eckmann-Hilton:
@@ -105,7 +122,12 @@ you've solved Exercise 1 (b).
 
 ```agda
 Eckmann-Hilton : {A : Type ℓ} {x : A} (p q : refl {x = x} ≡ refl) → p ∙ q ≡ q ∙ p
-Eckmann-Hilton = {!!}
+Eckmann-Hilton {x = x} p q i j =
+  hcomp (λ where k (i = i0) → ((λ j → rUnit (p j) k) ∙ (λ j → lUnit (q j) k)) j
+                 k (i = i1) → ((λ j → lUnit (q j) k) ∙ (λ j → rUnit (p j) k)) j
+                 k (j = i0) → lUnit (λ _ → x) k
+                 k (j = i1) → lUnit (λ _ → x) k)
+        (pre-EH p q i j)
 
 ```
 # Part 2: Binary numbers as a HIT
@@ -134,7 +156,10 @@ Define the successor function on ListBin
 ```agda
 
 sucListBin : ListBin → ListBin
-sucListBin = {!!}
+sucListBin [] = 1LB
+sucListBin (true ∷ l) = false ∷ sucListBin l
+sucListBin (false ∷ l) = true ∷ l
+sucListBin (drop0 i) = 1LB
 
 ```
 ### Exercise 5 (★★)
@@ -144,8 +169,19 @@ Do this by mutual induction! Make sure the three cases for the right unit law ho
 
 _+LB_ : ListBin → ListBin → ListBin
 rUnit+LB : (x : ListBin) → x +LB [] ≡ x
-x +LB y = {!!}
-rUnit+LB = {!!}
+[] +LB x = x
+(a ∷ x) +LB [] = a ∷ x
+(true ∷ x) +LB (true ∷ y) = false ∷ sucListBin (x +LB y)
+(true ∷ x) +LB (false ∷ y) = true ∷ (x +LB y)
+(false ∷ x) +LB (b ∷ y) = b ∷ (x +LB y)
+(true ∷ y) +LB drop0 i = true ∷ rUnit+LB y i
+(false ∷ y) +LB drop0 i = false ∷ rUnit+LB y i
+drop0 i +LB [] = drop0 i
+drop0 i +LB (x ∷ y) = x ∷ y
+drop0 i +LB drop0 j = drop0 (i ∧ j)
+rUnit+LB [] = refl
+rUnit+LB (x ∷ x₁) = refl
+rUnit+LB (drop0 i) = refl
 
 ```
 (c) Prove that sucListBin is left distributive over `+LB`
@@ -153,7 +189,18 @@ Hint: If you pattern match deep enough, there should be a lot of refls...
 ```agda
 
 sucListBinDistrL : (x y : ListBin) → sucListBin (x +LB y) ≡ (sucListBin x +LB y)
-sucListBinDistrL = {!!}
+sucListBinDistrL [] [] = refl
+sucListBinDistrL [] (true ∷ y) = refl
+sucListBinDistrL [] (false ∷ y) = refl
+sucListBinDistrL [] (drop0 i) = refl
+sucListBinDistrL (x ∷ x₁) [] = sym (rUnit+LB _)
+sucListBinDistrL (true ∷ x₁) (true ∷ y) = ap (true ∷_) (sucListBinDistrL x₁ y)
+sucListBinDistrL (true ∷ x₁) (false ∷ y) = ap (false ∷_) (sucListBinDistrL x₁ y)
+sucListBinDistrL (false ∷ x₁) (true ∷ y) = refl
+sucListBinDistrL (false ∷ x₁) (false ∷ y) = refl
+sucListBinDistrL (true ∷ x₁) (drop0 i) j = false ∷ {!   !}
+sucListBinDistrL (false ∷ x₁) (drop0 i) = {!   !}
+sucListBinDistrL (drop0 i) y = {!   !}
 ```
 
 ### Exercise 6 (★)
@@ -161,10 +208,12 @@ Define a map `LB→ℕ : ListBin → ℕ` and show that it preserves addition
 
 ```agda
 ℕ→ListBin : ℕ → ListBin
-ℕ→ListBin = {!!}
+ℕ→ListBin zero = []
+ℕ→ListBin (suc n) = sucListBin (ℕ→ListBin n)
 
 ℕ→ListBin-pres+ : (x y : ℕ) → ℕ→ListBin (x + y) ≡ (ℕ→ListBin x +LB ℕ→ListBin y)
-ℕ→ListBin-pres+ = {!!}
+ℕ→ListBin-pres+ zero y = refl
+ℕ→ListBin-pres+ (suc x) y = ap sucListBin (ℕ→ListBin-pres+ x y) ∙ sucListBinDistrL (ℕ→ListBin x) _
 
 ```
 
@@ -174,20 +223,40 @@ Show that `ℕ ≃ ListBin`.
 ```agda
 
 ListBin→ℕ : ListBin → ℕ
-ListBin→ℕ = {!!}
+ListBin→ℕ [] = zero
+ListBin→ℕ (true ∷ y) = suc (doubleℕ (ListBin→ℕ y))
+ListBin→ℕ (false ∷ y) = doubleℕ (ListBin→ℕ y)
+ListBin→ℕ (drop0 i) = zero
+
+ℕ→ListBin-doubleℕ : (n : ℕ) → ℕ→ListBin (doubleℕ n) ≡ 0B ∷ ℕ→ListBin n
+ℕ→ListBin-doubleℕ zero = sym drop0
+ℕ→ListBin-doubleℕ (suc n) = ap (λ x → sucListBin (sucListBin x)) (ℕ→ListBin-doubleℕ n)
 
 ListBin→ℕ→ListBin : (x : ListBin) → ℕ→ListBin (ListBin→ℕ x) ≡ x
-ListBin→ℕ→ListBin = {!!}
+ListBin→ℕ→ListBin [] = refl
+ListBin→ℕ→ListBin (true ∷ y) = ap sucListBin (ℕ→ListBin-doubleℕ (ListBin→ℕ y)) ∙ ap (1B ∷_) (ListBin→ℕ→ListBin y)
+ListBin→ℕ→ListBin (false ∷ y) = ℕ→ListBin-doubleℕ (ListBin→ℕ y) ∙ ap (0B ∷_) (ListBin→ℕ→ListBin y)
+ListBin→ℕ→ListBin (drop0 i) j = hcomp (λ where k (i = i1) → []
+                                               k (j = i0) → []
+                                               k (j = i1) → drop0 i)
+                                      (drop0 (i ∨ ~ j))
+
+ListBin→ℕ-sucListBin : (b : ListBin) → ListBin→ℕ (sucListBin b) ≡ suc (ListBin→ℕ b)
+ListBin→ℕ-sucListBin [] = refl
+ListBin→ℕ-sucListBin (true ∷ b) = ap doubleℕ (ListBin→ℕ-sucListBin b)
+ListBin→ℕ-sucListBin (false ∷ b) = refl
+ListBin→ℕ-sucListBin (drop0 i) = refl
 
 ℕ→ListBin→ℕ : (x : ℕ) → ListBin→ℕ (ℕ→ListBin x) ≡ x
-ℕ→ListBin→ℕ = {!!}
+ℕ→ListBin→ℕ zero = refl
+ℕ→ListBin→ℕ (suc x) = ListBin→ℕ-sucListBin (ℕ→ListBin x) ∙ ap suc (ℕ→ListBin→ℕ x)
 
 ℕ≃ListBin : ℕ ≃ ListBin
-ℕ≃ListBin = {!!}
+ℕ≃ListBin = isoToEquiv (iso ℕ→ListBin ListBin→ℕ ListBin→ℕ→ListBin ℕ→ListBin→ℕ)
 
 ```
 # Part 3: The SIP
-### Exericise 8 (★★)
+### Exercise 8 (★★)
 Show that, using an SIP inspired argument, if `(A , _+A_)` is a semigroup and `(B , _+B_)` is some other type with a composition satisfying:
 
 (i) `e : A ≃ B`
@@ -202,4 +271,6 @@ For inspiration, see Lecture9-notes
 ```agda
 
 SemiGroupListBin : SemiGroup ListBin
-SemiGroupListBin = {!!}
+SemiGroupListBin = substEquiv SemiGroup ℕ≃ListBin SemiGroupℕ
+
+```
