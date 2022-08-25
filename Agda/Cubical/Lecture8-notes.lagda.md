@@ -89,6 +89,32 @@ https://en.wikipedia.org/wiki/Integer#Construction
 
 Exercises: define `0`, `1`, `+`, `-`, `*`
 
+```agda
+reassoc : (a b c d : ℕ) → (a + b) + (c + d) ≡ (a + c) + (b + d)
+reassoc a b c d = sym (+-assoc a b _)
+                ∙ ap (a +_) (+-assoc b c d)
+                ∙ ap (λ x → a + x + d) (+-comm b c)
+                ∙ ap (a +_) (sym (+-assoc c b d))
+                ∙ +-assoc a c _
+
+_+ℤ'_ : ℤ' → ℤ' → ℤ'
+[ a , b ] +ℤ' [ c , d ] = [ a + c , b + d ]
+[ a , b ] +ℤ' eq/ (c , d) (e , f) eq i =
+  eq/ (a + c , b + d) (a + e , b + f)
+      (reassoc a c b f ∙ ap ((a + b) +_) eq ∙ reassoc a b e d) i
+eq/ (a , b) (c , d) eq i +ℤ' [ e , f ] =
+  eq/ (a + e , b + f) (c + e , d + f)
+      (reassoc a e d f ∙ ap (_+ e + f) eq ∙ reassoc c b e f) i
+eq/ (a , b) (c , d) eq i +ℤ' eq/ (e , f) (g , h) eq' j = {!   !}
+eq/ (a , b) (c , d) eq i +ℤ' trunc e f p q j k = {!   !}
+trunc a b p q i j +ℤ' c =
+  trunc (a +ℤ' c) (b +ℤ' c)
+        (λ j → p j +ℤ' c) (λ j → q j +ℤ' c) i j
+a +ℤ' trunc c d p q i j =
+  trunc (a +ℤ' c) (a +ℤ' d)
+        (λ j → a +ℤ' p j) (λ j → a +ℤ' q j) i j
+```
+
 Similarly we can define the rational numbers as a quotient of pairs of
 a number and a nonzero number (and more generally we can define the
 field of fractions of a commutative ring R using `_/_`). Both the
@@ -379,3 +405,4 @@ References
 
 [1] https://arxiv.org/abs/1611.02108
 [2] https://staff.math.su.se/anders.mortberg/papers/cubicalagda2.pdf
+ 
